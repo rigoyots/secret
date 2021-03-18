@@ -5,7 +5,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption");
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const app = express();
 
@@ -22,11 +23,6 @@ mongoose.connect("mongodb://localhost:27017/userDB", {
 const userSchema = new mongoose.Schema({
     email: String,
     password: String
-});
-
-userSchema.plugin(encrypt, {
-    secret: process.env.SECRET,
-    encryptedFields: ["password"]
 });
 
 const User = mongoose.model("User", userSchema);
@@ -48,18 +44,20 @@ app.post("/register", function (req, res) {
     const newEmail = req.body.username;
     const newPassword = req.body.password;
 
-    console.log(newEmail);
-    console.log(newPassword);
+    bcrypt.hash(newPassword, saltRounds, function (err, hash) {
+        console.log(newEmail);
+        console.log(newPassword);
 
-    const newUser = new User({
-        email: newEmail,
-        password: newPassword
-    });
+        const newUser = new User({
+            email: newEmail,
+            password: hash
+        });
 
-    newUser.save(function (err) {
-        if (!err) {
-            res.render("secrets");
-        };
+        newUser.save(function (err) {
+            if (!err) {
+                res.render("secrets");
+            };
+        });
     });
 
 });
@@ -77,12 +75,13 @@ app.post("/login", function (req, res) {
     }, function (err, foundUser) {
         if (!err) {
             if (foundUser) {
-                if (foundUser.password === password) {
-                    console.log("The user exists!");
-                    res.render("secrets");
-                } else {
-                    console.log("Wrong password!");
-                };
+                bcrypt.compare(password, foundUser.password, function (err, result) {
+                    if (result === true) {
+                        res.render("secrets");
+                    } else {
+                        console.log("Wrong password!");
+                    };
+                });
             } else {
                 console.log("The user does not exist.");
             };
