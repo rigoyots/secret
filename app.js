@@ -5,8 +5,6 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
 
 const app = express();
 
@@ -41,52 +39,13 @@ app.get("/register", function (req, res) {
 
 app.post("/register", function (req, res) {
 
-    const newEmail = req.body.username;
-    const newPassword = req.body.password;
 
-    bcrypt.hash(newPassword, saltRounds, function (err, hash) {
-        console.log(newEmail);
-        console.log(newPassword);
-
-        const newUser = new User({
-            email: newEmail,
-            password: hash
-        });
-
-        newUser.save(function (err) {
-            if (!err) {
-                res.render("secrets");
-            };
-        });
-    });
 
 });
 
 app.post("/login", function (req, res) {
 
-    const email = req.body.username;
-    const password = req.body.password;
 
-    console.log(email);
-    console.log(password);
-
-    User.findOne({
-        email: email
-    }, function (err, foundUser) {
-        if (!err) {
-            if (foundUser) {
-                bcrypt.compare(password, foundUser.password, function (err, result) {
-                    if (result === true) {
-                        res.render("secrets");
-                    } else {
-                        console.log("Wrong password!");
-                    };
-                });
-            } else {
-                console.log("The user does not exist.");
-            };
-        };
-    });
 
 });
 
